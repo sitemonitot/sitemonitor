@@ -62,3 +62,15 @@ async def register_page():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/debug-env")
+async def debug_env():
+    import os
+    return {
+        "GROQ_API_KEY": bool(os.getenv("GROQ_API_KEY")),
+        "DEVTO_API_KEY": bool(os.getenv("DEVTO_API_KEY")),
+        "BLUESKY_HANDLE": os.getenv("BLUESKY_HANDLE", ""),
+        "BASE_URL": os.getenv("BASE_URL", ""),
+        "SECRET_KEY": bool(os.getenv("SECRET_KEY")),
+    }
