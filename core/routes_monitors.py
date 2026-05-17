@@ -100,6 +100,28 @@ async def create_monitor(data: MonitorCreate, user: User = Depends(get_current_u
     return {"id": monitor.id, "url": monitor.url, "label": monitor.label}
 
 
+class MonitorUpdate(BaseModel):
+    url: Optional[str] = None
+    label: Optional[str] = None
+    keyword: Optional[str] = None
+
+
+@router.put("/{monitor_id}")
+async def update_monitor(monitor_id: int, data: MonitorUpdate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Monitor).where(Monitor.id == monitor_id, Monitor.user_id == user.id))
+    monitor = result.scalar_one_or_none()
+    if not monitor:
+        raise HTTPException(404, "Monitor no encontrado")
+    if data.url is not None:
+        monitor.url = str(data.url)
+    if data.label is not None:
+        monitor.label = data.label or None
+    if data.keyword is not None:
+        monitor.keyword = data.keyword or None
+    await db.commit()
+    return {"id": monitor.id, "url": monitor.url, "label": monitor.label, "keyword": monitor.keyword}
+
+
 @router.delete("/{monitor_id}")
 async def delete_monitor(monitor_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Monitor).where(Monitor.id == monitor_id, Monitor.user_id == user.id))

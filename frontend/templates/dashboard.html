@@ -71,6 +71,33 @@
 
 </main>
 
+<!-- Modal editar monitor -->
+<div id="edit-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+  <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+    <h2 class="text-xl font-bold mb-2">Edit monitor</h2>
+    <p class="text-sm text-gray-500 mb-6">Update the URL, keyword or name.</p>
+    <input type="hidden" id="edit-id">
+    <div class="space-y-4">
+      <div>
+        <label class="text-sm font-medium text-gray-700">Website URL <span class="text-red-400">*</span></label>
+        <input id="edit-url" type="url" class="w-full border rounded-xl px-4 py-3 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Keyword <span class="text-gray-400 font-normal">(optional)</span></label>
+        <input id="edit-keyword" type="text" class="w-full border rounded-xl px-4 py-3 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Name <span class="text-gray-400 font-normal">(optional)</span></label>
+        <input id="edit-label" type="text" class="w-full border rounded-xl px-4 py-3 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm">
+      </div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="closeEditModal()" class="flex-1 border border-gray-300 rounded-xl py-2.5 text-gray-600 hover:bg-gray-50 transition text-sm">Cancel</button>
+      <button onclick="updateMonitor()" class="flex-1 bg-blue-500 text-white rounded-xl py-2.5 font-semibold hover:bg-blue-400 transition text-sm">Save changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal añadir monitor -->
 <div id="modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
   <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
@@ -153,6 +180,7 @@
           <button onclick="viewAlerts(${m.id}, '${(m.label || m.url).replace(/'/g, '')}')" class="relative text-sm text-blue-600 hover:text-blue-800 px-3 py-1 rounded-lg border border-blue-200 hover:bg-blue-50 transition">
             Alerts${m.unseen_alerts > 0 ? ` <span class="bg-red-500 text-white text-xs rounded-full px-1">${m.unseen_alerts}</span>` : ''}
           </button>
+          <button onclick="openEditModal(${m.id}, '${(m.url).replace(/'/g, "\\'")}', '${(m.label||'').replace(/'/g, "\\'")}', '${(m.keyword||'').replace(/'/g, "\\'")}' )" class="text-sm text-gray-500 hover:text-gray-800 px-3 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 transition">Edit</button>
           <button onclick="deleteMonitor(${m.id})" class="text-sm text-red-400 hover:text-red-600 px-3 py-1 rounded-lg border border-red-100 hover:bg-red-50 transition">✕</button>
         </div>
       </div>
@@ -180,6 +208,34 @@
     const result = await api('/billing/checkout', 'POST');
     if (result?.checkout_url) window.location.href = result.checkout_url;
   }
+
+  function openEditModal(id, url, label, keyword) {
+    document.getElementById('edit-id').value = id;
+    document.getElementById('edit-url').value = url;
+    document.getElementById('edit-label').value = label;
+    document.getElementById('edit-keyword').value = keyword;
+    document.getElementById('edit-modal').style.display = 'flex';
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').style.display = 'none';
+  }
+
+  async function updateMonitor() {
+    const id = document.getElementById('edit-id').value;
+    const url = document.getElementById('edit-url').value.trim();
+    const label = document.getElementById('edit-label').value.trim();
+    const keyword = document.getElementById('edit-keyword').value.trim();
+    if (!url) return alert('URL is required');
+    const result = await api(`/monitors/${id}`, 'PUT', { url, label: label || null, keyword: keyword || null });
+    if (result?.detail) { alert(result.detail); return; }
+    closeEditModal();
+    loadDashboard();
+  }
+
+  document.getElementById('edit-modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeEditModal();
+  });
 
   function openModal() { document.getElementById('modal').style.display = 'flex'; }
   function closeModal() {
