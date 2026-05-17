@@ -1,7 +1,7 @@
 import secrets
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel, EmailStr
@@ -9,7 +9,7 @@ from typing import Optional
 from core.database import get_db
 from core.models import User
 from core.auth import hash_password, verify_password, create_token, get_current_user
-from core.emailer import send_welcome_email, send_reset_email
+from core.emailer import send_welcome_email, send_reset_email, send_verification_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -31,11 +31,12 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
         raise HTTPException(400, "Email ya registrado")
     if len(data.password) < 8:
         raise HTTPException(400, "La contraseña debe tener al menos 8 caracteres")
-    user = User(email=data.email, hashed_password=hash_password(data.password))
+    verification_token = secrets.token_urlsafe(32)
+    user = User(email=data.email, hashed_password=hash_password(data.password), is_verified=False, verification_token=verification_token)
     db.add(user)
     await db.commit()
     await db.refresh(user)
-    await send_welcome_email(user.email)
+    await send_verification_email(user.email, verification_token)
     return {"token": create_token(user.id), "email": user.email, "is_pro": user.is_pro}
 
 
@@ -55,6 +56,7 @@ async def get_profile(user: User = Depends(get_current_user)):
         "email": user.email,
         "display_name": user.display_name or "",
         "is_pro": user.is_pro,
+        "is_verified": user.is_verified if user.is_verified is not None else True,
         "alert_emails": alert_emails,
         "stripe_subscription_id": user.stripe_subscription_id,
         "created_at": user.created_at.isoformat() if user.created_at else None,
@@ -128,6 +130,31 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str
     password: str
+
+
+@router.get("/verify")
+async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.verification_token == token))
+    user = result.scalar_one_or_none()
+    if not user:
+        return RedirectResponse("/dashboard?verified=invalid")
+    user.is_verified = True
+    user.verification_token = None
+    await db.commit()
+    return RedirectResponse("/dashboard?verified=1")
+
+
+@router.post("/resend-verification")
+async def resend_verification(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if user.is_verified:
+        return {"ok": True}
+    result = await db.execute(select(User).where(User.id == user.id))
+    db_user = result.scalar_one()
+    token = secrets.token_urlsafe(32)
+    db_user.verification_token = token
+    await db.commit()
+    await send_verification_email(db_user.email, token)
+    return {"ok": True}
 
 
 @router.post("/forgot-password")

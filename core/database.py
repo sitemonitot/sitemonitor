@@ -53,6 +53,8 @@ async def init_db():
             ("alert_emails", "TEXT"),
             ("reset_token", "VARCHAR"),
             ("reset_token_expires", "TIMESTAMP"),
+            ("is_verified", "BOOLEAN DEFAULT TRUE"),
+            ("verification_token", "VARCHAR"),
         ]:
             await _add_column_if_missing(conn, "users", col_name, col_type)
 

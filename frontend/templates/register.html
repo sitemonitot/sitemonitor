@@ -45,10 +45,10 @@
       const data = await resp.json();
       if (resp.ok) {
         localStorage.setItem('sm_token', data.token);
-        window.location.href = '/dashboard';
+        window.location.href = '/dashboard?new=1';
       } else {
         const err = document.getElementById('error');
-        err.textContent = data.detail || 'Error al registrarse';
+        err.textContent = data.detail || 'Registration error — please try again.';
         err.classList.remove('hidden');
       }
     }

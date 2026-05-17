@@ -20,6 +20,8 @@ class User(Base):
     alert_emails = Column(Text, nullable=True)  # comma-separated extra alert emails
     reset_token = Column(String, nullable=True)
     reset_token_expires = Column(DateTime, nullable=True)
+    is_verified = Column(Boolean, default=False)
+    verification_token = Column(String, nullable=True)
 
     monitors = relationship("Monitor", back_populates="user", cascade="all, delete")
 

@@ -96,10 +96,9 @@ Would love any feedback from the dev community!
 
 
 def start_scheduler():
-    # Checks gratuitos: cada 24h
-    scheduler.add_job(job_check_all, IntervalTrigger(hours=24), id="check_all", replace_existing=True)
-    # Checks Pro: cada hora
-    scheduler.add_job(job_check_pro, IntervalTrigger(hours=1), id="check_pro", replace_existing=True)
+    from core.config import FREE_CHECK_INTERVAL_HOURS, PRO_CHECK_INTERVAL_HOURS
+    scheduler.add_job(job_check_all, IntervalTrigger(hours=FREE_CHECK_INTERVAL_HOURS), id="check_all", replace_existing=True)
+    scheduler.add_job(job_check_pro, IntervalTrigger(hours=PRO_CHECK_INTERVAL_HOURS), id="check_pro", replace_existing=True)
     # Marketing: revisar posts pendientes cada 30 min
     scheduler.add_job(job_marketing_posts, IntervalTrigger(minutes=30), id="marketing", replace_existing=True)
     # Menciones Reddit: cada 2 horas

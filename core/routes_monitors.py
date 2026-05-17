@@ -1,5 +1,6 @@
 import logging
 import traceback
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -11,6 +12,7 @@ from core.auth import get_current_user
 from core import config
 
 logger = logging.getLogger(__name__)
+_last_manual_check: dict[int, datetime] = {}
 
 router = APIRouter(prefix="/monitors", tags=["monitors"])
 
@@ -65,6 +67,7 @@ async def list_monitors(user: User = Depends(get_current_user), db: AsyncSession
 
         monitor_ids = [m.id for m in monitors]
         unseen_map = {}
+        total_map = {}
         if monitor_ids:
             unseen_result = await db.execute(
                 select(Alert.monitor_id, func.count(Alert.id))
@@ -72,6 +75,12 @@ async def list_monitors(user: User = Depends(get_current_user), db: AsyncSession
                 .group_by(Alert.monitor_id)
             )
             unseen_map = {row[0]: row[1] for row in unseen_result.all()}
+            total_result = await db.execute(
+                select(Alert.monitor_id, func.count(Alert.id))
+                .where(Alert.monitor_id.in_(monitor_ids))
+                .group_by(Alert.monitor_id)
+            )
+            total_map = {row[0]: row[1] for row in total_result.all()}
     except Exception as e:
         logger.error(f"list_monitors error: {traceback.format_exc()}")
         raise HTTPException(500, f"Error loading monitors: {str(e)}")
@@ -88,6 +97,7 @@ async def list_monitors(user: User = Depends(get_current_user), db: AsyncSession
             "last_changed_at": m.last_changed_at,
             "created_at": m.created_at,
             "unseen_alerts": unseen_map.get(m.id, 0),
+            "total_alerts": total_map.get(m.id, 0),
         }
         for m in monitors
     ]
@@ -149,12 +159,29 @@ async def delete_monitor(monitor_id: int, user: User = Depends(get_current_user)
     return {"ok": True}
 
 
-@router.post("/{monitor_id}/check")
-async def force_check(monitor_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+@router.patch("/{monitor_id}/toggle")
+async def toggle_monitor(monitor_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Monitor).where(Monitor.id == monitor_id, Monitor.user_id == user.id))
     monitor = result.scalar_one_or_none()
     if not monitor:
-        raise HTTPException(404, "Monitor no encontrado")
+        raise HTTPException(404, "Monitor not found")
+    monitor.is_active = not monitor.is_active
+    await db.commit()
+    return {"is_active": monitor.is_active}
+
+
+@router.post("/{monitor_id}/check")
+async def force_check(monitor_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    now = datetime.utcnow()
+    last = _last_manual_check.get(monitor_id)
+    if last and (now - last).total_seconds() < 60:
+        raise HTTPException(429, "Please wait at least 1 minute between manual checks.")
+    _last_manual_check[monitor_id] = now
+
+    result = await db.execute(select(Monitor).where(Monitor.id == monitor_id, Monitor.user_id == user.id))
+    monitor = result.scalar_one_or_none()
+    if not monitor:
+        raise HTTPException(404, "Monitor not found")
     try:
         from core.checker import check_monitor
         had_baseline = monitor.last_content is not None
