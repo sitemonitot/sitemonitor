@@ -1,3 +1,5 @@
+import logging
+import traceback
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -7,6 +9,8 @@ from core.database import get_db
 from core.models import Monitor, Alert, User
 from core.auth import get_current_user
 from core import config
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/monitors", tags=["monitors"])
 
@@ -55,16 +59,22 @@ async def mark_notifications_read(user: User = Depends(get_current_user), db: As
 
 @router.get("/")
 async def list_monitors(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Monitor).where(Monitor.user_id == user.id))
-    monitors = result.scalars().all()
+    try:
+        result = await db.execute(select(Monitor).where(Monitor.user_id == user.id))
+        monitors = result.scalars().all()
 
-    # Count unseen alerts per monitor
-    unseen_result = await db.execute(
-        select(Alert.monitor_id, func.count(Alert.id))
-        .where(Alert.monitor_id.in_([m.id for m in monitors]), Alert.seen == False)
-        .group_by(Alert.monitor_id)
-    )
-    unseen_map = {row[0]: row[1] for row in unseen_result.all()}
+        monitor_ids = [m.id for m in monitors]
+        unseen_map = {}
+        if monitor_ids:
+            unseen_result = await db.execute(
+                select(Alert.monitor_id, func.count(Alert.id))
+                .where(Alert.monitor_id.in_(monitor_ids), Alert.seen == False)
+                .group_by(Alert.monitor_id)
+            )
+            unseen_map = {row[0]: row[1] for row in unseen_result.all()}
+    except Exception as e:
+        logger.error(f"list_monitors error: {traceback.format_exc()}")
+        raise HTTPException(500, f"Error loading monitors: {str(e)}")
 
     return [
         {
@@ -85,19 +95,25 @@ async def list_monitors(user: User = Depends(get_current_user), db: AsyncSession
 
 @router.post("/")
 async def create_monitor(data: MonitorCreate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    if not user.is_pro:
-        count_result = await db.execute(
-            select(func.count()).where(Monitor.user_id == user.id, Monitor.is_active == True)
-        )
-        count = count_result.scalar()
-        if count >= config.FREE_URL_LIMIT:
-            raise HTTPException(402, f"Límite del plan gratuito: {config.FREE_URL_LIMIT} URLs. Actualiza a Pro para más.")
+    try:
+        if not user.is_pro:
+            count_result = await db.execute(
+                select(func.count()).where(Monitor.user_id == user.id, Monitor.is_active == True)
+            )
+            count = count_result.scalar()
+            if count >= config.FREE_URL_LIMIT:
+                raise HTTPException(402, f"Free plan limit: {config.FREE_URL_LIMIT} URLs. Upgrade to Pro for more.")
 
-    monitor = Monitor(user_id=user.id, url=str(data.url), label=data.label, keyword=data.keyword, css_selector=data.css_selector)
-    db.add(monitor)
-    await db.commit()
-    await db.refresh(monitor)
-    return {"id": monitor.id, "url": monitor.url, "label": monitor.label}
+        monitor = Monitor(user_id=user.id, url=str(data.url), label=data.label, keyword=data.keyword)
+        db.add(monitor)
+        await db.commit()
+        await db.refresh(monitor)
+        return {"id": monitor.id, "url": monitor.url, "label": monitor.label}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"create_monitor error: {traceback.format_exc()}")
+        raise HTTPException(500, f"Error creating monitor: {str(e)}")
 
 
 class MonitorUpdate(BaseModel):
