@@ -1,4 +1,7 @@
+import secrets
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel, EmailStr
@@ -6,7 +9,7 @@ from typing import Optional
 from core.database import get_db
 from core.models import User
 from core.auth import hash_password, verify_password, create_token, get_current_user
-from core.emailer import send_welcome_email
+from core.emailer import send_welcome_email, send_reset_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -81,5 +84,76 @@ async def delete_account(user: User = Depends(get_current_user), db: AsyncSessio
     result = await db.execute(select(User).where(User.id == user.id))
     db_user = result.scalar_one()
     await db.delete(db_user)
+    await db.commit()
+    return {"ok": True}
+
+
+@router.get("/export")
+async def export_data(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    from core.models import Monitor, Alert
+    from sqlalchemy.orm import selectinload
+    result = await db.execute(
+        select(User).options(selectinload(User.monitors).selectinload(Monitor.alerts)).where(User.id == user.id)
+    )
+    u = result.scalar_one()
+    data = {
+        "account": {
+            "email": u.email,
+            "display_name": u.display_name,
+            "is_pro": u.is_pro,
+            "created_at": u.created_at.isoformat() if u.created_at else None,
+            "alert_emails": [e.strip() for e in (u.alert_emails or "").split(",") if e.strip()],
+        },
+        "monitors": [
+            {
+                "url": m.url,
+                "label": m.label,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+                "last_checked_at": m.last_checked_at.isoformat() if m.last_checked_at else None,
+                "alerts": [
+                    {"detected_at": a.detected_at.isoformat() if a.detected_at else None}
+                    for a in m.alerts
+                ],
+            }
+            for m in u.monitors
+        ],
+    }
+    return JSONResponse(content=data, headers={"Content-Disposition": "attachment; filename=my_data.json"})
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    password: str
+
+
+@router.post("/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.email == data.email))
+    user = result.scalar_one_or_none()
+    # Always return OK to avoid email enumeration
+    if user:
+        token = secrets.token_urlsafe(32)
+        user.reset_token = token
+        user.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
+        await db.commit()
+        await send_reset_email(user.email, token)
+    return {"ok": True}
+
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.reset_token == data.token))
+    user = result.scalar_one_or_none()
+    if not user or not user.reset_token_expires or user.reset_token_expires < datetime.utcnow():
+        raise HTTPException(400, "Invalid or expired token")
+    if len(data.password) < 8:
+        raise HTTPException(400, "Password must be at least 8 characters")
+    user.hashed_password = hash_password(data.password)
+    user.reset_token = None
+    user.reset_token_expires = None
     await db.commit()
     return {"ok": True}

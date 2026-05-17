@@ -12,8 +12,7 @@ async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         # Add new columns if they don't exist (safe migration)
-        for col in ("display_name VARCHAR", "alert_emails TEXT"):
-            col_name = col.split()[0]
+        for col in ("display_name VARCHAR", "alert_emails TEXT", "reset_token VARCHAR", "reset_token_expires DATETIME"):
             try:
                 await conn.execute(__import__("sqlalchemy").text(
                     f"ALTER TABLE users ADD COLUMN {col}"

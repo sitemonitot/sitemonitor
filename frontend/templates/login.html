@@ -16,12 +16,15 @@
     </div>
     <div class="space-y-4">
       <input id="email" type="email" placeholder="tu@email.com" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-300">
-      <input id="password" type="password" placeholder="Contraseña" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-300"
+      <input id="password" type="password" placeholder="Password" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-300"
         onkeydown="if(event.key==='Enter') login()">
-      <button onclick="login()" class="w-full bg-blue-500 hover:bg-blue-400 text-white font-bold py-3 rounded-xl transition">Entrar</button>
+      <div class="flex justify-end">
+        <a href="/forgot-password" class="text-blue-500 hover:underline text-xs">Forgot password?</a>
+      </div>
+      <button onclick="login()" class="w-full bg-blue-500 hover:bg-blue-400 text-white font-bold py-3 rounded-xl transition">Log in</button>
     </div>
     <p id="error" class="text-red-500 text-sm text-center mt-3 hidden"></p>
-    <p class="text-center text-gray-500 text-sm mt-6">¿No tienes cuenta? <a href="/register" class="text-blue-500 hover:underline">Regístrate gratis</a></p>
+    <p class="text-center text-gray-500 text-sm mt-6">Don't have an account? <a href="/register" class="text-blue-500 hover:underline">Sign up free</a></p>
   </div>
   <script>
     async function login() {

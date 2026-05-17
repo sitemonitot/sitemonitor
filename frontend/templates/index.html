@@ -237,6 +237,21 @@
   </div>
 </footer>
 
+<!-- GDPR Banner -->
+<div id="gdpr-banner" class="fixed bottom-0 left-0 right-0 bg-gray-900 text-white px-6 py-4 z-40 shadow-2xl" style="display:none">
+  <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <p class="text-sm text-gray-300 leading-relaxed">
+      We use essential local storage (JWT tokens) to keep you logged in. We do not use tracking cookies or sell your data.
+      By using this site you agree to our <a href="/privacy" class="text-blue-400 hover:underline">Privacy Policy</a> and <a href="/terms" class="text-blue-400 hover:underline">Terms of Service</a>.
+    </p>
+    <button onclick="acceptGdpr()" class="flex-shrink-0 bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold px-6 py-2 rounded-xl transition">Got it</button>
+  </div>
+</div>
+<script>
+  if (!localStorage.getItem('gdpr_ok')) document.getElementById('gdpr-banner').style.display = 'block';
+  function acceptGdpr() { localStorage.setItem('gdpr_ok', '1'); document.getElementById('gdpr-banner').style.display = 'none'; }
+</script>
+
 <!-- Chat Widget -->
 <div id="chat-widget">
   <div id="chat-box" class="bg-white rounded-2xl shadow-2xl border border-gray-200 mb-4 flex flex-col overflow-hidden">

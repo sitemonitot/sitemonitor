@@ -18,6 +18,8 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     display_name = Column(String, nullable=True)
     alert_emails = Column(Text, nullable=True)  # comma-separated extra alert emails
+    reset_token = Column(String, nullable=True)
+    reset_token_expires = Column(DateTime, nullable=True)
 
     monitors = relationship("Monitor", back_populates="user", cascade="all, delete")
 

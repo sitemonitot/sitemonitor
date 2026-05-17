@@ -89,6 +89,16 @@ async def profile_page():
     return html("profile.html")
 
 
+@app.get("/forgot-password", response_class=HTMLResponse)
+async def forgot_password_page():
+    return html("forgot-password.html")
+
+
+@app.get("/reset-password", response_class=HTMLResponse)
+async def reset_password_page():
+    return html("reset-password.html")
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}

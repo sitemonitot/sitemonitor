@@ -20,19 +20,19 @@
         onkeydown="if(event.key==='Enter') register()">
       <label class="flex items-start gap-3 text-sm text-gray-600 cursor-pointer">
         <input id="terms" type="checkbox" class="mt-0.5 w-4 h-4 accent-blue-500 flex-shrink-0">
-        <span>I agree to the <a href="/terms" target="_blank" class="text-blue-500 hover:underline">Terms of Service</a></span>
+        <span>I have read and agree to the <a href="/terms" target="_blank" class="text-blue-500 hover:underline">Terms of Service</a> and <a href="/privacy" target="_blank" class="text-blue-500 hover:underline">Privacy Policy</a></span>
       </label>
       <button onclick="register()" class="w-full bg-blue-500 hover:bg-blue-400 text-white font-bold py-3 rounded-xl transition">Create free account</button>
     </div>
     <p id="error" class="text-red-500 text-sm text-center mt-3 hidden"></p>
-    <p class="text-center text-gray-500 text-xs mt-4">✅ Sin tarjeta de crédito &nbsp;·&nbsp; ✅ 3 URLs gratuitas &nbsp;·&nbsp; ✅ Cancela cuando quieras</p>
-    <p class="text-center text-gray-500 text-sm mt-4">¿Ya tienes cuenta? <a href="/login" class="text-blue-500 hover:underline">Entra aquí</a></p>
+    <p class="text-center text-gray-500 text-xs mt-4">✅ No credit card &nbsp;·&nbsp; ✅ 3 free URLs &nbsp;·&nbsp; ✅ Cancel anytime</p>
+    <p class="text-center text-gray-500 text-sm mt-4">Already have an account? <a href="/login" class="text-blue-500 hover:underline">Log in</a></p>
   </div>
   <script>
     async function register() {
       if (!document.getElementById('terms').checked) {
         const err = document.getElementById('error');
-        err.textContent = 'You must accept the Terms of Service to continue.';
+        err.textContent = 'You must accept the Terms of Service and Privacy Policy to continue.';
         err.classList.remove('hidden');
         return;
       }
