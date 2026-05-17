@@ -66,7 +66,8 @@ async def check_monitor(monitor: Monitor, db: AsyncSession):
         result = await db.execute(select(User).where(User.id == monitor.user_id))
         user = result.scalar_one_or_none()
         if user:
-            await send_change_alert(user.email, monitor.url, monitor.label, old_snippet, new_snippet)
+            extra = [e.strip() for e in (user.alert_emails or "").split(",") if e.strip()]
+            await send_change_alert(user.email, monitor.url, monitor.label, old_snippet, new_snippet, extra_emails=extra)
             alert.email_sent = True
             await db.commit()
 

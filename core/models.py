@@ -16,6 +16,8 @@ class User(Base):
     stripe_customer_id = Column(String, nullable=True)
     stripe_subscription_id = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    display_name = Column(String, nullable=True)
+    alert_emails = Column(Text, nullable=True)  # comma-separated extra alert emails
 
     monitors = relationship("Monitor", back_populates="user", cascade="all, delete")
 

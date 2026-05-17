@@ -84,6 +84,11 @@ async def privacy_page():
     return html("privacy.html")
 
 
+@app.get("/profile", response_class=HTMLResponse)
+async def profile_page():
+    return html("profile.html")
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}

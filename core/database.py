@@ -11,6 +11,15 @@ AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=F
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Add new columns if they don't exist (safe migration)
+        for col in ("display_name VARCHAR", "alert_emails TEXT"):
+            col_name = col.split()[0]
+            try:
+                await conn.execute(__import__("sqlalchemy").text(
+                    f"ALTER TABLE users ADD COLUMN {col}"
+                ))
+            except Exception:
+                pass  # column already exists
 
 
 async def get_db():

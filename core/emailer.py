@@ -11,7 +11,7 @@ def _from_email() -> str:
     return os.getenv("FROM_EMAIL", "") or config.FROM_EMAIL
 
 
-async def send_change_alert(to_email: str, url: str, label: str | None, old_snippet: str, new_snippet: str):
+async def send_change_alert(to_email: str, url: str, label: str | None, old_snippet: str, new_snippet: str, extra_emails: list[str] | None = None):
     label_text = label or url
     subject = f"[SiteMonitor] Cambio detectado: {label_text}"
     base_url = os.getenv("BASE_URL", "") or config.BASE_URL
@@ -34,9 +34,10 @@ async def send_change_alert(to_email: str, url: str, label: str | None, old_snip
         print(f"[EMAIL SIMULADO] Para: {to_email} | Asunto: {subject}")
         return
     resend.api_key = key
+    all_emails = [to_email] + [e for e in (extra_emails or []) if e != to_email]
     resend.Emails.send({
         "from": _from_email(),
-        "to": to_email,
+        "to": all_emails,
         "subject": subject,
         "html": body,
     })
