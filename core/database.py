@@ -22,7 +22,7 @@ AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=F
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        for col in ("keyword VARCHAR",):
+        for col in ("keyword VARCHAR", "css_selector VARCHAR", "label VARCHAR"):
             try:
                 await conn.execute(__import__("sqlalchemy").text(f"ALTER TABLE monitors ADD COLUMN {col}"))
             except Exception:
