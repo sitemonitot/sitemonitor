@@ -17,7 +17,11 @@
       <input id="email" type="email" placeholder="tu@email.com" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-300">
       <input id="password" type="password" placeholder="Contraseña (mín. 8 caracteres)" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-300"
         onkeydown="if(event.key==='Enter') register()">
-      <button onclick="register()" class="w-full bg-blue-500 hover:bg-blue-400 text-white font-bold py-3 rounded-xl transition">Crear cuenta gratis</button>
+      <label class="flex items-start gap-3 text-sm text-gray-600 cursor-pointer">
+        <input id="terms" type="checkbox" class="mt-0.5 w-4 h-4 accent-blue-500 flex-shrink-0">
+        <span>I agree to the <a href="/terms" target="_blank" class="text-blue-500 hover:underline">Terms of Service</a></span>
+      </label>
+      <button onclick="register()" class="w-full bg-blue-500 hover:bg-blue-400 text-white font-bold py-3 rounded-xl transition">Create free account</button>
     </div>
     <p id="error" class="text-red-500 text-sm text-center mt-3 hidden"></p>
     <p class="text-center text-gray-500 text-xs mt-4">✅ Sin tarjeta de crédito &nbsp;·&nbsp; ✅ 3 URLs gratuitas &nbsp;·&nbsp; ✅ Cancela cuando quieras</p>
@@ -25,6 +29,12 @@
   </div>
   <script>
     async function register() {
+      if (!document.getElementById('terms').checked) {
+        const err = document.getElementById('error');
+        err.textContent = 'You must accept the Terms of Service to continue.';
+        err.classList.remove('hidden');
+        return;
+      }
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       const resp = await fetch('/auth/register', {

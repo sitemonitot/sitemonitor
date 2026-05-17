@@ -74,6 +74,11 @@ async def register_page():
     return html("register.html")
 
 
+@app.get("/terms", response_class=HTMLResponse)
+async def terms_page():
+    return html("terms.html")
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}
