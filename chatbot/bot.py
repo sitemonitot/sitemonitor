@@ -34,13 +34,15 @@ class ChatRequest(BaseModel):
 
 @router.post("/")
 async def chat(data: ChatRequest, db: AsyncSession = Depends(get_db)):
-    if not config.GROQ_API_KEY:
+    import os
+    groq_key = os.getenv("GROQ_API_KEY", "") or config.GROQ_API_KEY
+    if not groq_key:
         return {
             "reply": "El chatbot no está activo. Añade GROQ_API_KEY en .env (gratis en console.groq.com).",
             "session_id": data.session_id or "local",
         }
 
-    client = Groq(api_key=config.GROQ_API_KEY)
+    client = Groq(api_key=groq_key)
     session_id = data.session_id or str(uuid.uuid4())
 
     result = await db.execute(select(ChatSession).where(ChatSession.session_id == session_id))

@@ -2,7 +2,12 @@ from groq import Groq
 from core import config
 import json
 
-client = Groq(api_key=config.GROQ_API_KEY) if config.GROQ_API_KEY else None
+def _get_client():
+    import os
+    key = os.getenv("GROQ_API_KEY", "") or config.GROQ_API_KEY
+    if not key:
+        raise RuntimeError("GROQ_API_KEY no configurada")
+    return Groq(api_key=key)
 
 MODEL = "llama-3.3-70b-versatile"
 
@@ -25,9 +30,7 @@ REDDIT_SUBREDDITS = [
 
 
 def _chat(prompt: str, max_tokens: int = 800) -> str:
-    if not client:
-        raise RuntimeError("GROQ_API_KEY no configurada")
-    resp = client.chat.completions.create(
+    resp = _get_client().chat.completions.create(
         model=MODEL,
         max_tokens=max_tokens,
         messages=[{"role": "user", "content": prompt}],
