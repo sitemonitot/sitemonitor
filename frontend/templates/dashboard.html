@@ -203,7 +203,8 @@
     const keyword = document.getElementById('input-keyword').value.trim();
     if (!url) return alert('URL is required');
     const result = await api('/monitors/', 'POST', { url, label: label || null, keyword: keyword || null });
-    if (result?.detail) { alert(result.detail); return; }
+    if (!result) { alert('Error saving monitor. Please try again.'); return; }
+    if (result.detail) { alert(result.detail); return; }
     closeModal();
     loadDashboard();
   }
@@ -238,7 +239,8 @@
     const keyword = document.getElementById('edit-keyword').value.trim();
     if (!url) return alert('URL is required');
     const result = await api(`/monitors/${id}`, 'PUT', { url, label: label || null, keyword: keyword || null });
-    if (result?.detail) { alert(result.detail); return; }
+    if (!result) { alert('Error saving changes. Please try again.'); return; }
+    if (result.detail) { alert(result.detail); return; }
     closeEditModal();
     loadDashboard();
   }
