@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar – SiteMonitor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>.gradient-bg { background: linear-gradient(135deg, #1e3a5f 0%, #0f2340 100%); }</style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center px-4">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+    <div class="text-center mb-8">
+      <a href="/" class="text-3xl font-bold text-gray-800">🔔 SiteMonitor</a>
+      <p class="text-gray-500 mt-2 text-sm">Inicia sesión en tu cuenta</p>
+    </div>
+    <div class="space-y-4">
+      <input id="email" type="email" placeholder="tu@email.com" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-300">
+      <input id="password" type="password" placeholder="Contraseña" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-300"
+        onkeydown="if(event.key==='Enter') login()">
+      <button onclick="login()" class="w-full bg-blue-500 hover:bg-blue-400 text-white font-bold py-3 rounded-xl transition">Entrar</button>
+    </div>
+    <p id="error" class="text-red-500 text-sm text-center mt-3 hidden"></p>
+    <p class="text-center text-gray-500 text-sm mt-6">¿No tienes cuenta? <a href="/register" class="text-blue-500 hover:underline">Regístrate gratis</a></p>
+  </div>
+  <script>
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const resp = await fetch('/auth/login', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        localStorage.setItem('sm_token', data.token);
+        window.location.href = '/dashboard';
+      } else {
+        const err = document.getElementById('error');
+        err.textContent = data.detail || 'Error al iniciar sesión';
+        err.classList.remove('hidden');
+      }
+    }
+  </script>
+</body>
+</html>

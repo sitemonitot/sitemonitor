@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – SiteMonitor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .gradient-bg { background: linear-gradient(135deg, #1e3a5f 0%, #0f2340 100%); }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<nav class="gradient-bg text-white px-6 py-4 flex justify-between items-center">
+  <a href="/" class="text-xl font-bold">🔔 SiteMonitor</a>
+  <div class="flex items-center gap-4">
+    <span id="plan-badge" class="text-xs bg-blue-400 px-3 py-1 rounded-full">Cargando...</span>
+    <button onclick="logout()" class="text-blue-200 hover:text-white text-sm">Salir</button>
+  </div>
+</nav>
+
+<main class="max-w-4xl mx-auto px-6 py-10">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-2xl font-bold text-gray-800">Mis monitores</h1>
+    <button onclick="openModal()" class="bg-blue-500 hover:bg-blue-400 text-white px-5 py-2 rounded-xl font-medium transition">+ Añadir URL</button>
+  </div>
+
+  <!-- Upgrade banner (solo plan free) -->
+  <div id="upgrade-banner" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex justify-between items-center">
+    <div>
+      <strong>¿Necesitas más?</strong> El plan Pro te da URLs ilimitadas y checks cada hora.
+    </div>
+    <button onclick="upgradePro()" class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-400 transition">
+      Actualizar a Pro – $5/mes
+    </button>
+  </div>
+
+  <!-- Lista de monitores -->
+  <div id="monitors-list" class="space-y-4">
+    <div class="text-gray-500 text-center py-10">Cargando monitores...</div>
+  </div>
+
+</main>
+
+<!-- Modal añadir monitor -->
+<div id="modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+  <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+    <h2 class="text-xl font-bold mb-6">Añadir URL a monitorizar</h2>
+    <div class="space-y-4">
+      <div>
+        <label class="text-sm font-medium text-gray-700">URL *</label>
+        <input id="input-url" type="url" placeholder="https://ejemplo.com/producto" class="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-300">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Nombre (opcional)</label>
+        <input id="input-label" type="text" placeholder="Precio iPhone en Amazon" class="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-300">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Selector CSS (opcional, solo Pro)</label>
+        <input id="input-selector" type="text" placeholder=".price, #stock-status" class="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-300">
+        <p class="text-xs text-gray-400 mt-1">Monitoriza solo una parte específica de la página</p>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="closeModal()" class="flex-1 border border-gray-300 rounded-xl py-2 text-gray-600 hover:bg-gray-50 transition">Cancelar</button>
+      <button onclick="createMonitor()" class="flex-1 bg-blue-500 text-white rounded-xl py-2 font-medium hover:bg-blue-400 transition">Añadir monitor</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const token = localStorage.getItem('sm_token');
+  if (!token) window.location.href = '/login';
+
+  async function api(path, method = 'GET', body = null) {
+    const opts = { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    const resp = await fetch(path, opts);
+    if (resp.status === 401) { logout(); return; }
+    return resp.json();
+  }
+
+  async function loadDashboard() {
+    const [monitors] = await Promise.all([api('/monitors/')]);
+    renderMonitors(monitors);
+  }
+
+  function renderMonitors(monitors) {
+    const container = document.getElementById('monitors-list');
+    if (!monitors || monitors.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-16 text-gray-400">
+          <div class="text-5xl mb-4">🔍</div>
+          <p class="text-lg">Aún no tienes ningún monitor</p>
+          <p class="text-sm mt-2">Añade tu primera URL para empezar</p>
+        </div>`;
+      return;
+    }
+    container.innerHTML = monitors.map(m => `
+      <div class="bg-white rounded-xl border border-gray-200 p-5 flex items-center justify-between hover:shadow-md transition">
+        <div class="flex-1 min-w-0">
+          <div class="font-medium text-gray-800 truncate">${m.label || m.url}</div>
+          <div class="text-xs text-gray-400 truncate mt-1">${m.url}</div>
+          <div class="flex gap-4 mt-2 text-xs text-gray-500">
+            <span>Último check: ${m.last_checked_at ? new Date(m.last_checked_at).toLocaleString('es-ES') : 'Pendiente'}</span>
+            ${m.last_changed_at ? `<span class="text-green-600">Último cambio: ${new Date(m.last_changed_at).toLocaleString('es-ES')}</span>` : ''}
+          </div>
+        </div>
+        <div class="flex gap-2 ml-4">
+          <button onclick="viewAlerts(${m.id}, '${(m.label || m.url).replace(/'/g, '')}') " class="text-sm text-blue-600 hover:text-blue-800 px-3 py-1 rounded-lg border border-blue-200 hover:bg-blue-50 transition">Alertas</button>
+          <button onclick="deleteMonitor(${m.id})" class="text-sm text-red-400 hover:text-red-600 px-3 py-1 rounded-lg border border-red-100 hover:bg-red-50 transition">✕</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function createMonitor() {
+    const url = document.getElementById('input-url').value.trim();
+    const label = document.getElementById('input-label').value.trim();
+    const selector = document.getElementById('input-selector').value.trim();
+    if (!url) return alert('La URL es obligatoria');
+    const result = await api('/monitors/', 'POST', { url, label: label || null, css_selector: selector || null });
+    if (result?.detail) { alert(result.detail); return; }
+    closeModal();
+    loadDashboard();
+  }
+
+  async function deleteMonitor(id) {
+    if (!confirm('¿Eliminar este monitor?')) return;
+    await api(`/monitors/${id}`, 'DELETE');
+    loadDashboard();
+  }
+
+  async function viewAlerts(id, label) {
+    const alerts = await api(`/monitors/${id}/alerts`);
+    if (!alerts || alerts.length === 0) { alert(`Sin alertas para: ${label}`); return; }
+    const msg = alerts.map(a => `📅 ${new Date(a.detected_at).toLocaleString('es-ES')}\n→ ${a.new_snippet?.substring(0,100)}...`).join('\n\n');
+    alert(`Últimas alertas de "${label}":\n\n${msg}`);
+  }
+
+  async function upgradePro() {
+    const result = await api('/billing/checkout', 'POST');
+    if (result?.checkout_url) window.location.href = result.checkout_url;
+  }
+
+  function openModal() { document.getElementById('modal').style.display = 'flex'; }
+  function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+    document.getElementById('input-url').value = '';
+    document.getElementById('input-label').value = '';
+    document.getElementById('input-selector').value = '';
+  }
+
+  function logout() { localStorage.removeItem('sm_token'); window.location.href = '/'; }
+
+  document.getElementById('modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+
+  loadDashboard();
+</script>
+</body>
+</html>

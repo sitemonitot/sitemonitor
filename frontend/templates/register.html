@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro gratis – SiteMonitor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>.gradient-bg { background: linear-gradient(135deg, #1e3a5f 0%, #0f2340 100%); }</style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center px-4">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+    <div class="text-center mb-8">
+      <a href="/" class="text-3xl font-bold text-gray-800">🔔 SiteMonitor</a>
+      <p class="text-gray-500 mt-2 text-sm">Crea tu cuenta gratuita</p>
+    </div>
+    <div class="space-y-4">
+      <input id="email" type="email" placeholder="tu@email.com" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-300">
+      <input id="password" type="password" placeholder="Contraseña (mín. 8 caracteres)" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-300"
+        onkeydown="if(event.key==='Enter') register()">
+      <button onclick="register()" class="w-full bg-blue-500 hover:bg-blue-400 text-white font-bold py-3 rounded-xl transition">Crear cuenta gratis</button>
+    </div>
+    <p id="error" class="text-red-500 text-sm text-center mt-3 hidden"></p>
+    <p class="text-center text-gray-500 text-xs mt-4">✅ Sin tarjeta de crédito &nbsp;·&nbsp; ✅ 3 URLs gratuitas &nbsp;·&nbsp; ✅ Cancela cuando quieras</p>
+    <p class="text-center text-gray-500 text-sm mt-4">¿Ya tienes cuenta? <a href="/login" class="text-blue-500 hover:underline">Entra aquí</a></p>
+  </div>
+  <script>
+    async function register() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const resp = await fetch('/auth/register', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        localStorage.setItem('sm_token', data.token);
+        window.location.href = '/dashboard';
+      } else {
+        const err = document.getElementById('error');
+        err.textContent = data.detail || 'Error al registrarse';
+        err.classList.remove('hidden');
+      }
+    }
+  </script>
+</body>
+</html>
