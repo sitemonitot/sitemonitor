@@ -85,8 +85,17 @@
   }
 
   async function loadDashboard() {
-    const [monitors] = await Promise.all([api('/monitors/')]);
+    const [monitors, profile] = await Promise.all([api('/monitors/'), api('/auth/profile')]);
     renderMonitors(monitors);
+    if (profile) {
+      const badge = document.getElementById('plan-badge');
+      badge.textContent = profile.is_pro ? 'Pro' : 'Free';
+      badge.className = profile.is_pro
+        ? 'text-xs px-3 py-1 rounded-full text-white font-semibold'
+        : 'text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full';
+      if (profile.is_pro) badge.style.background = 'linear-gradient(90deg,#1a73e8,#38bdf8)';
+      document.getElementById('upgrade-banner').classList.toggle('hidden', profile.is_pro);
+    }
   }
 
   function renderMonitors(monitors) {
