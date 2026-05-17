@@ -79,6 +79,11 @@ async def terms_page():
     return html("terms.html")
 
 
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy_page():
+    return html("privacy.html")
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}
