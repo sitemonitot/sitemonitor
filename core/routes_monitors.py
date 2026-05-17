@@ -149,6 +149,32 @@ async def delete_monitor(monitor_id: int, user: User = Depends(get_current_user)
     return {"ok": True}
 
 
+@router.post("/{monitor_id}/check")
+async def force_check(monitor_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Monitor).where(Monitor.id == monitor_id, Monitor.user_id == user.id))
+    monitor = result.scalar_one_or_none()
+    if not monitor:
+        raise HTTPException(404, "Monitor no encontrado")
+    try:
+        from core.checker import check_monitor
+        had_baseline = monitor.last_content is not None
+        await check_monitor(monitor, db)
+        await db.refresh(monitor)
+        # Check if a new alert was created
+        alert_result = await db.execute(
+            select(Alert).where(Alert.monitor_id == monitor_id).order_by(Alert.detected_at.desc()).limit(1)
+        )
+        latest = alert_result.scalar_one_or_none()
+        if not had_baseline:
+            return {"status": "baseline_saved", "message": "First check done — baseline saved. Future changes will trigger alerts."}
+        if latest and latest.detected_at == monitor.last_changed_at:
+            return {"status": "changed", "message": "Change detected! Alert created and email sent."}
+        return {"status": "no_change", "message": "No changes detected since last check."}
+    except Exception as e:
+        logger.error(f"force_check error: {traceback.format_exc()}")
+        raise HTTPException(500, f"Check failed: {str(e)}")
+
+
 @router.get("/{monitor_id}/alerts")
 async def get_alerts(monitor_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Monitor).where(Monitor.id == monitor_id, Monitor.user_id == user.id))

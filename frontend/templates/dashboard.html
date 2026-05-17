@@ -189,7 +189,8 @@
             ${m.last_changed_at ? `<span class="text-green-600">Last change: ${new Date(m.last_changed_at).toLocaleString()}</span>` : ''}
           </div>
         </div>
-        <div class="flex gap-2 ml-4">
+        <div class="flex gap-2 ml-4 flex-wrap justify-end">
+          <button onclick="checkNow(${m.id}, this)" class="text-sm text-green-600 hover:text-green-800 px-3 py-1 rounded-lg border border-green-200 hover:bg-green-50 transition">Check</button>
           <button onclick="viewAlerts(${m.id}, '${(m.label || m.url).replace(/'/g, '')}')" class="relative text-sm text-blue-600 hover:text-blue-800 px-3 py-1 rounded-lg border border-blue-200 hover:bg-blue-50 transition">
             Alerts${m.unseen_alerts > 0 ? ` <span class="bg-red-500 text-white text-xs rounded-full px-1">${m.unseen_alerts}</span>` : ''}
           </button>
@@ -209,6 +210,18 @@
     if (!result || result._error) { alert('Error: ' + (result?.detail || 'Could not save monitor')); return; }
     closeModal();
     loadDashboard();
+  }
+
+  async function checkNow(id, btn) {
+    btn.textContent = '...';
+    btn.disabled = true;
+    const result = await api(`/monitors/${id}/check`, 'POST');
+    btn.textContent = 'Check';
+    btn.disabled = false;
+    if (!result || result._error) { alert('Error: ' + (result?.detail || 'Check failed')); return; }
+    alert(result.message);
+    loadDashboard();
+    loadNotifications();
   }
 
   async function deleteMonitor(id) {
