@@ -7,13 +7,28 @@ from core.models import User
 from core.auth import get_current_user
 from core import config
 
-stripe.api_key = config.STRIPE_SECRET_KEY
 router = APIRouter(prefix="/billing", tags=["billing"])
+
+
+def _stripe_key() -> str:
+    import os
+    return os.getenv("STRIPE_SECRET_KEY", "") or config.STRIPE_SECRET_KEY
+
+
+def _price_id() -> str:
+    import os
+    return os.getenv("STRIPE_PRO_PRICE_ID", "") or config.STRIPE_PRO_PRICE_ID
+
+
+def _webhook_secret() -> str:
+    import os
+    return os.getenv("STRIPE_WEBHOOK_SECRET", "") or config.STRIPE_WEBHOOK_SECRET
 
 
 @router.post("/checkout")
 async def create_checkout(user: User = Depends(get_current_user)):
-    if not config.STRIPE_SECRET_KEY:
+    stripe.api_key = _stripe_key()
+    if not stripe.api_key:
         raise HTTPException(503, "Stripe no configurado")
 
     customer_id = user.stripe_customer_id
@@ -24,7 +39,7 @@ async def create_checkout(user: User = Depends(get_current_user)):
     session = stripe.checkout.Session.create(
         customer=customer_id,
         payment_method_types=["card"],
-        line_items=[{"price": config.STRIPE_PRO_PRICE_ID, "quantity": 1}],
+        line_items=[{"price": _price_id(), "quantity": 1}],
         mode="subscription",
         success_url=f"{config.BASE_URL}/dashboard?upgraded=1",
         cancel_url=f"{config.BASE_URL}/dashboard",
@@ -35,6 +50,7 @@ async def create_checkout(user: User = Depends(get_current_user)):
 
 @router.post("/portal")
 async def customer_portal(user: User = Depends(get_current_user)):
+    stripe.api_key = _stripe_key()
     if not user.stripe_customer_id:
         raise HTTPException(400, "No hay suscripción activa")
     session = stripe.billing_portal.Session.create(
@@ -49,8 +65,9 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     payload = await request.body()
     sig = request.headers.get("stripe-signature", "")
 
+    stripe.api_key = _stripe_key()
     try:
-        event = stripe.Webhook.construct_event(payload, sig, config.STRIPE_WEBHOOK_SECRET)
+        event = stripe.Webhook.construct_event(payload, sig, _webhook_secret())
     except Exception:
         raise HTTPException(400, "Webhook inválido")
 
