@@ -1,30 +1,85 @@
 import httpx
 import hashlib
+import logging
 from bs4 import BeautifulSoup
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from core.models import Monitor, Alert, User
-from core import config
 from core.emailer import send_change_alert
+
+logger = logging.getLogger(__name__)
+
+
+def _parse_html(html: str, css_selector: str | None = None) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+    if css_selector:
+        el = soup.select_one(css_selector)
+        return el.get_text(strip=True) if el else ""
+    for tag in soup(["script", "style", "nav", "footer", "head"]):
+        tag.decompose()
+    return soup.get_text(separator=" ", strip=True)[:5000]
+
+
+async def _fetch_with_httpx(url: str) -> str | None:
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36"}
+    try:
+        async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
+            resp = await client.get(url, headers=headers)
+            resp.raise_for_status()
+            return resp.text
+    except Exception:
+        return None
+
+
+async def _fetch_with_playwright(url: str) -> str | None:
+    try:
+        from playwright.async_api import async_playwright
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
+            page = await browser.new_page()
+            await page.goto(url, wait_until="networkidle", timeout=30000)
+            content = await page.content()
+            await browser.close()
+            return content
+    except Exception as e:
+        logger.warning(f"Playwright falló para {url}: {e}")
+        return None
 
 
 async def fetch_content(url: str, css_selector: str | None = None) -> str | None:
-    headers = {"User-Agent": "Mozilla/5.0 (compatible; SiteMonitorBot/1.0)"}
-    try:
-        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
-            resp = await client.get(url, headers=headers)
-            resp.raise_for_status()
-            soup = BeautifulSoup(resp.text, "html.parser")
-            if css_selector:
-                el = soup.select_one(css_selector)
-                return el.get_text(strip=True) if el else None
-            # Por defecto: texto del body sin scripts/styles
-            for tag in soup(["script", "style", "nav", "footer", "head"]):
-                tag.decompose()
-            return soup.get_text(separator=" ", strip=True)[:5000]
-    except Exception:
-        return None
+    html = await _fetch_with_httpx(url)
+    if html:
+        text = _parse_html(html, css_selector)
+        # Si hay poco texto, probablemente la página usa JS → intentar con Playwright
+        if len(text.split()) < 50:
+            logger.info(f"Poco contenido en {url} ({len(text.split())} palabras), intentando Playwright...")
+            html_js = await _fetch_with_playwright(url)
+            if html_js:
+                text_js = _parse_html(html_js, css_selector)
+                if len(text_js.split()) > len(text.split()):
+                    return text_js
+        return text or None
+    # httpx falló completamente → intentar con Playwright
+    logger.info(f"httpx falló para {url}, intentando Playwright...")
+    html_js = await _fetch_with_playwright(url)
+    if html_js:
+        return _parse_html(html_js, css_selector) or None
+    return None
+
+
+def extract_keyword_context(content: str, keyword: str) -> str:
+    lower = content.lower()
+    kw_lower = keyword.lower()
+    occurrences = lower.count(kw_lower)
+    if occurrences == 0:
+        return f"['{keyword}' NOT FOUND on page]"
+    # Extraer contexto alrededor de la primera aparición
+    idx = lower.find(kw_lower)
+    start = max(0, idx - 150)
+    end = min(len(content), idx + len(keyword) + 150)
+    context = content[start:end].strip()
+    return f"['{keyword}' found {occurrences}x] ...{context}..."
 
 
 def content_hash(content: str) -> str:
@@ -39,6 +94,10 @@ async def check_monitor(monitor: Monitor, db: AsyncSession):
     new_content = await fetch_content(monitor.url, monitor.css_selector)
     if new_content is None:
         return
+
+    # Si hay palabra clave, reducir el contenido a rastrear
+    if monitor.keyword:
+        new_content = extract_keyword_context(new_content, monitor.keyword)
 
     now = datetime.utcnow()
     monitor.last_checked_at = now
@@ -85,4 +144,7 @@ async def run_checks(db: AsyncSession, pro_only: bool = False):
             continue
         if pro_only and not user.is_pro:
             continue
-        await check_monitor(monitor, db)
+        try:
+            await check_monitor(monitor, db)
+        except Exception as e:
+            logger.error(f"Error checking monitor {monitor.id}: {e}")

@@ -49,25 +49,26 @@
 <!-- Modal añadir monitor -->
 <div id="modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
   <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
-    <h2 class="text-xl font-bold mb-6">Añadir URL a monitorizar</h2>
+    <h2 class="text-xl font-bold mb-2">Monitor a new URL</h2>
+    <p class="text-sm text-gray-500 mb-6">We'll alert you by email when anything changes.</p>
     <div class="space-y-4">
       <div>
-        <label class="text-sm font-medium text-gray-700">URL *</label>
-        <input id="input-url" type="url" placeholder="https://ejemplo.com/producto" class="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-300">
+        <label class="text-sm font-medium text-gray-700">Website URL <span class="text-red-400">*</span></label>
+        <input id="input-url" type="url" placeholder="https://example.com/product" class="w-full border rounded-xl px-4 py-3 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm">
       </div>
       <div>
-        <label class="text-sm font-medium text-gray-700">Nombre (opcional)</label>
-        <input id="input-label" type="text" placeholder="Precio iPhone en Amazon" class="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-300">
+        <label class="text-sm font-medium text-gray-700">Keyword to track <span class="text-gray-400 font-normal">(optional)</span></label>
+        <input id="input-keyword" type="text" placeholder="e.g. In Stock, Apply Now, €299" class="w-full border rounded-xl px-4 py-3 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm">
+        <p class="text-xs text-gray-400 mt-1">Alert when this word appears, disappears, or its context changes</p>
       </div>
       <div>
-        <label class="text-sm font-medium text-gray-700">Selector CSS (opcional, solo Pro)</label>
-        <input id="input-selector" type="text" placeholder=".price, #stock-status" class="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-300">
-        <p class="text-xs text-gray-400 mt-1">Monitoriza solo una parte específica de la página</p>
+        <label class="text-sm font-medium text-gray-700">Name <span class="text-gray-400 font-normal">(optional)</span></label>
+        <input id="input-label" type="text" placeholder="e.g. iPhone price on Amazon" class="w-full border rounded-xl px-4 py-3 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm">
       </div>
     </div>
     <div class="flex gap-3 mt-6">
-      <button onclick="closeModal()" class="flex-1 border border-gray-300 rounded-xl py-2 text-gray-600 hover:bg-gray-50 transition">Cancelar</button>
-      <button onclick="createMonitor()" class="flex-1 bg-blue-500 text-white rounded-xl py-2 font-medium hover:bg-blue-400 transition">Añadir monitor</button>
+      <button onclick="closeModal()" class="flex-1 border border-gray-300 rounded-xl py-2.5 text-gray-600 hover:bg-gray-50 transition text-sm">Cancel</button>
+      <button onclick="createMonitor()" class="flex-1 bg-blue-500 text-white rounded-xl py-2.5 font-semibold hover:bg-blue-400 transition text-sm">Add monitor</button>
     </div>
   </div>
 </div>
@@ -114,9 +115,10 @@
         <div class="flex-1 min-w-0">
           <div class="font-medium text-gray-800 truncate">${m.label || m.url}</div>
           <div class="text-xs text-gray-400 truncate mt-1">${m.url}</div>
-          <div class="flex gap-4 mt-2 text-xs text-gray-500">
-            <span>Último check: ${m.last_checked_at ? new Date(m.last_checked_at).toLocaleString('es-ES') : 'Pendiente'}</span>
-            ${m.last_changed_at ? `<span class="text-green-600">Último cambio: ${new Date(m.last_changed_at).toLocaleString('es-ES')}</span>` : ''}
+          <div class="flex flex-wrap gap-3 mt-2 text-xs text-gray-500 items-center">
+            ${m.keyword ? `<span class="bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full font-medium">🔑 ${m.keyword}</span>` : ''}
+            <span>Last check: ${m.last_checked_at ? new Date(m.last_checked_at).toLocaleString() : 'Pending'}</span>
+            ${m.last_changed_at ? `<span class="text-green-600">Last change: ${new Date(m.last_changed_at).toLocaleString()}</span>` : ''}
           </div>
         </div>
         <div class="flex gap-2 ml-4">
@@ -130,9 +132,9 @@
   async function createMonitor() {
     const url = document.getElementById('input-url').value.trim();
     const label = document.getElementById('input-label').value.trim();
-    const selector = document.getElementById('input-selector').value.trim();
-    if (!url) return alert('La URL es obligatoria');
-    const result = await api('/monitors/', 'POST', { url, label: label || null, css_selector: selector || null });
+    const keyword = document.getElementById('input-keyword').value.trim();
+    if (!url) return alert('URL is required');
+    const result = await api('/monitors/', 'POST', { url, label: label || null, keyword: keyword || null });
     if (result?.detail) { alert(result.detail); return; }
     closeModal();
     loadDashboard();
@@ -161,7 +163,7 @@
     document.getElementById('modal').style.display = 'none';
     document.getElementById('input-url').value = '';
     document.getElementById('input-label').value = '';
-    document.getElementById('input-selector').value = '';
+    document.getElementById('input-keyword').value = '';
   }
 
   function logout() { localStorage.removeItem('sm_token'); window.location.href = '/'; }

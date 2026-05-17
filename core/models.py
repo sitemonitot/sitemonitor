@@ -31,7 +31,8 @@ class Monitor(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     url = Column(String, nullable=False)
     label = Column(String, nullable=True)
-    css_selector = Column(String, nullable=True)  # monitorizar solo parte de la página
+    css_selector = Column(String, nullable=True)
+    keyword = Column(String, nullable=True)  # palabra clave a monitorizar
     last_content = Column(Text, nullable=True)
     last_checked_at = Column(DateTime, nullable=True)
     last_changed_at = Column(DateTime, nullable=True)

@@ -22,13 +22,21 @@ AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=F
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Safe migration: add keyword column if missing (works on both SQLite and PostgreSQL)
+        try:
+            await conn.execute(__import__("sqlalchemy").text("ALTER TABLE monitors ADD COLUMN keyword VARCHAR"))
+        except Exception:
+            pass
         # SQLite-only: add columns that may be missing in existing databases
         if DATABASE_URL.startswith("sqlite"):
             for col in ("display_name VARCHAR", "alert_emails TEXT", "reset_token VARCHAR", "reset_token_expires DATETIME"):
                 try:
-                    await conn.execute(__import__("sqlalchemy").text(
-                        f"ALTER TABLE users ADD COLUMN {col}"
-                    ))
+                    await conn.execute(__import__("sqlalchemy").text(f"ALTER TABLE users ADD COLUMN {col}"))
+                except Exception:
+                    pass
+            for col in ("keyword VARCHAR",):
+                try:
+                    await conn.execute(__import__("sqlalchemy").text(f"ALTER TABLE monitors ADD COLUMN {col}"))
                 except Exception:
                     pass
 

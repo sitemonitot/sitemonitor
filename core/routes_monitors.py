@@ -14,6 +14,7 @@ router = APIRouter(prefix="/monitors", tags=["monitors"])
 class MonitorCreate(BaseModel):
     url: str
     label: Optional[str] = None
+    keyword: Optional[str] = None
     css_selector: Optional[str] = None
 
 
@@ -26,6 +27,7 @@ async def list_monitors(user: User = Depends(get_current_user), db: AsyncSession
             "id": m.id,
             "url": m.url,
             "label": m.label,
+            "keyword": m.keyword,
             "css_selector": m.css_selector,
             "is_active": m.is_active,
             "last_checked_at": m.last_checked_at,
@@ -46,7 +48,7 @@ async def create_monitor(data: MonitorCreate, user: User = Depends(get_current_u
         if count >= config.FREE_URL_LIMIT:
             raise HTTPException(402, f"Límite del plan gratuito: {config.FREE_URL_LIMIT} URLs. Actualiza a Pro para más.")
 
-    monitor = Monitor(user_id=user.id, url=str(data.url), label=data.label, css_selector=data.css_selector)
+    monitor = Monitor(user_id=user.id, url=str(data.url), label=data.label, keyword=data.keyword, css_selector=data.css_selector)
     db.add(monitor)
     await db.commit()
     await db.refresh(monitor)
