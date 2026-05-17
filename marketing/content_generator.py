@@ -12,12 +12,11 @@ def _get_client():
 MODEL = "llama-3.3-70b-versatile"
 
 PRODUCT_CONTEXT = """
-GetURLMonitor es una herramienta SaaS que monitoriza URLs y envía alertas por email cuando
-detecta cambios en el contenido. Casos de uso: seguimiento de precios, alertas de empleo,
-cambios en webs de competidores, disponibilidad de stock.
-- Plan gratuito: 3 URLs, checks cada 24h
-- Plan Pro: $5/mes, URLs ilimitadas, checks cada hora
-- Web: https://www.geturlmonitor.com
+GetURLMonitor is a SaaS tool that monitors URLs and sends email alerts when it detects
+content changes. Use cases: price tracking, job alerts, competitor website changes, stock availability.
+- Free plan: 3 URLs, checks every 24h
+- Pro plan: $5/month, unlimited URLs, checks every hour
+- Website: https://www.geturlmonitor.com
 """
 
 REDDIT_SUBREDDITS = [
@@ -65,25 +64,26 @@ def _parse_json(text: str) -> dict:
 
 async def generate_reddit_post(subreddit: str, context_hint: str) -> dict:
     prompt = f"""
-Eres el creador de SiteMonitor. Escribe un post auténtico para el subreddit r/{subreddit}.
+You are the creator of GetURLMonitor. Write an authentic post for the subreddit r/{subreddit}.
 
-Contexto del producto:
+Product context:
 {PRODUCT_CONTEXT}
 
-Tono del subreddit: {context_hint}
+Subreddit tone: {context_hint}
 
-Reglas:
-- Sé honesto y transparente, no hagas spam
-- Aporta valor real al lector
-- Menciona el producto de forma natural, no agresiva
-- Incluye algo útil aunque no usen el producto
-- Máximo 400 palabras
-- Título atractivo pero no clickbait
+Rules:
+- Be honest and transparent, no spam
+- Provide real value to the reader
+- Mention the product naturally, not aggressively
+- Include something useful even if they don't use the product
+- Maximum 400 words
+- Attractive title but no clickbait
+- Write entirely in English
 
-Responde EXACTAMENTE en este formato (sin nada más):
-TITLE: el título aquí
+Respond EXACTLY in this format (nothing else):
+TITLE: the title here
 BODY:
-el cuerpo del post en markdown aquí
+the post body in markdown here
 """
     text = _chat(prompt)
     lines = text.strip().split("\n")
@@ -102,22 +102,23 @@ el cuerpo del post en markdown aquí
 
 async def generate_devto_post() -> dict:
     prompt = f"""
-Eres el creador de SiteMonitor. Escribe un artículo técnico para Dev.to.
+You are the creator of GetURLMonitor. Write a technical article for Dev.to.
 
-Contexto:
+Context:
 {PRODUCT_CONTEXT}
 
-El artículo debe:
-- Tener valor técnico real
-- Mencionar SiteMonitor de forma natural al final
-- 500-800 palabras
-- Exactamente 4 tags en inglés, simples (ej: webdev, python, productivity, opensource)
+The article must:
+- Have real technical value
+- Mention GetURLMonitor naturally at the end
+- 500-800 words
+- Exactly 4 simple tags in English (e.g.: webdev, python, productivity, opensource)
+- Write entirely in English
 
-Responde EXACTAMENTE en este formato (sin nada más):
-TITLE: el título aquí
+Respond EXACTLY in this format (nothing else):
+TITLE: the title here
 TAGS: tag1,tag2,tag3,tag4
 BODY:
-el cuerpo del artículo en markdown aquí
+the article body in markdown here
 """
     text = _chat(prompt, max_tokens=1500)
     lines = text.strip().split("\n")
@@ -139,12 +140,13 @@ el cuerpo del artículo en markdown aquí
 
 async def generate_bluesky_post() -> str:
     prompt = f"""
-Eres el creador de SiteMonitor. Escribe un post para Bluesky (máx 280 caracteres).
+You are the creator of GetURLMonitor. Write a post for Bluesky (max 280 characters).
 
-Producto: {PRODUCT_CONTEXT}
+Product: {PRODUCT_CONTEXT}
 
-El post debe ser natural, útil, no spam. Puede ser un tip, estadística o mención del producto.
+The post must be natural, useful, not spam. Can be a tip, statistic, or product mention.
+Write entirely in English.
 
-Responde SOLO con el texto del post, sin comillas ni explicaciones.
+Respond ONLY with the post text, no quotes or explanations.
 """
     return _chat(prompt, max_tokens=100)[:280]
