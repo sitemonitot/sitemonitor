@@ -18,10 +18,54 @@ class MonitorCreate(BaseModel):
     css_selector: Optional[str] = None
 
 
+@router.get("/notifications")
+async def get_notifications(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Alert, Monitor)
+        .join(Monitor, Alert.monitor_id == Monitor.id)
+        .where(Monitor.user_id == user.id, Alert.seen == False)
+        .order_by(Alert.detected_at.desc())
+        .limit(20)
+    )
+    rows = result.all()
+    return [
+        {
+            "id": a.id,
+            "monitor_id": a.monitor_id,
+            "monitor_label": m.label or m.url,
+            "detected_at": a.detected_at,
+            "new_snippet": a.new_content_snippet,
+        }
+        for a, m in rows
+    ]
+
+
+@router.post("/notifications/read")
+async def mark_notifications_read(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Alert).join(Monitor, Alert.monitor_id == Monitor.id)
+        .where(Monitor.user_id == user.id, Alert.seen == False)
+    )
+    alerts = result.scalars().all()
+    for a in alerts:
+        a.seen = True
+    await db.commit()
+    return {"ok": True}
+
+
 @router.get("/")
 async def list_monitors(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Monitor).where(Monitor.user_id == user.id))
     monitors = result.scalars().all()
+
+    # Count unseen alerts per monitor
+    unseen_result = await db.execute(
+        select(Alert.monitor_id, func.count(Alert.id))
+        .where(Alert.monitor_id.in_([m.id for m in monitors]), Alert.seen == False)
+        .group_by(Alert.monitor_id)
+    )
+    unseen_map = {row[0]: row[1] for row in unseen_result.all()}
+
     return [
         {
             "id": m.id,
@@ -33,6 +77,7 @@ async def list_monitors(user: User = Depends(get_current_user), db: AsyncSession
             "last_checked_at": m.last_checked_at,
             "last_changed_at": m.last_changed_at,
             "created_at": m.created_at,
+            "unseen_alerts": unseen_map.get(m.id, 0),
         }
         for m in monitors
     ]

@@ -52,6 +52,7 @@ class Alert(Base):
     new_content_snippet = Column(Text, nullable=True)
     detected_at = Column(DateTime, default=datetime.utcnow)
     email_sent = Column(Boolean, default=False)
+    seen = Column(Boolean, default=False)
 
     monitor = relationship("Monitor", back_populates="alerts")
 

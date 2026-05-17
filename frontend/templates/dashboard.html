@@ -12,36 +12,61 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
 
-<nav class="gradient-bg text-white px-6 py-4 flex justify-between items-center">
+<nav class="gradient-bg text-white px-6 py-4 flex justify-between items-center relative">
   <a href="/" class="text-xl font-bold">GetURLMonitor</a>
   <div class="flex items-center gap-4">
-    <span id="plan-badge" class="text-xs bg-blue-400 px-3 py-1 rounded-full">Cargando...</span>
+    <span id="plan-badge" class="text-xs bg-blue-400 px-3 py-1 rounded-full">Loading...</span>
+
+    <!-- Notification bell -->
+    <div class="relative">
+      <button onclick="toggleNotifications()" class="relative text-blue-200 hover:text-white transition p-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        <span id="notif-badge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">0</span>
+      </button>
+
+      <!-- Dropdown -->
+      <div id="notif-dropdown" class="hidden absolute right-0 top-10 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+        <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100">
+          <span class="font-semibold text-gray-800 text-sm">Notifications</span>
+          <button onclick="markAllRead()" class="text-xs text-blue-500 hover:underline">Mark all as read</button>
+        </div>
+        <div id="notif-list" class="max-h-80 overflow-y-auto divide-y divide-gray-50">
+          <div class="text-center text-gray-400 text-sm py-6">No new notifications</div>
+        </div>
+      </div>
+    </div>
+
     <a href="/profile" class="text-blue-200 hover:text-white text-sm transition">Settings</a>
     <button onclick="logout()" class="text-blue-200 hover:text-white text-sm">Log out</button>
   </div>
 </nav>
 
+<!-- Click outside to close notifications -->
+<div id="notif-overlay" class="hidden fixed inset-0 z-40" onclick="closeNotifications()"></div>
+
 <main class="max-w-4xl mx-auto px-6 py-10">
 
   <!-- Header -->
   <div class="flex justify-between items-center mb-8">
-    <h1 class="text-2xl font-bold text-gray-800">Mis monitores</h1>
-    <button onclick="openModal()" class="bg-blue-500 hover:bg-blue-400 text-white px-5 py-2 rounded-xl font-medium transition">+ Añadir URL</button>
+    <h1 class="text-2xl font-bold text-gray-800">My monitors</h1>
+    <button onclick="openModal()" class="bg-blue-500 hover:bg-blue-400 text-white px-5 py-2 rounded-xl font-medium transition">+ Add URL</button>
   </div>
 
-  <!-- Upgrade banner (solo plan free) -->
+  <!-- Upgrade banner -->
   <div id="upgrade-banner" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex justify-between items-center">
     <div>
-      <strong>¿Necesitas más?</strong> El plan Pro te da URLs ilimitadas y checks cada hora.
+      <strong>Need more?</strong> Pro gives you unlimited URLs and hourly checks.
     </div>
     <button onclick="upgradePro()" class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-400 transition">
-      Actualizar a Pro – $5/mes
+      Upgrade to Pro – $5/mo
     </button>
   </div>
 
-  <!-- Lista de monitores -->
+  <!-- Monitor list -->
   <div id="monitors-list" class="space-y-4">
-    <div class="text-gray-500 text-center py-10">Cargando monitores...</div>
+    <div class="text-gray-500 text-center py-10">Loading monitors...</div>
   </div>
 
 </main>
@@ -113,7 +138,10 @@
     container.innerHTML = monitors.map(m => `
       <div class="bg-white rounded-xl border border-gray-200 p-5 flex items-center justify-between hover:shadow-md transition">
         <div class="flex-1 min-w-0">
-          <div class="font-medium text-gray-800 truncate">${m.label || m.url}</div>
+          <div class="flex items-center gap-2">
+            <span class="font-medium text-gray-800 truncate">${m.label || m.url}</span>
+            ${m.unseen_alerts > 0 ? `<span class="bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">${m.unseen_alerts}</span>` : ''}
+          </div>
           <div class="text-xs text-gray-400 truncate mt-1">${m.url}</div>
           <div class="flex flex-wrap gap-3 mt-2 text-xs text-gray-500 items-center">
             ${m.keyword ? `<span class="bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full font-medium">🔑 ${m.keyword}</span>` : ''}
@@ -122,7 +150,9 @@
           </div>
         </div>
         <div class="flex gap-2 ml-4">
-          <button onclick="viewAlerts(${m.id}, '${(m.label || m.url).replace(/'/g, '')}') " class="text-sm text-blue-600 hover:text-blue-800 px-3 py-1 rounded-lg border border-blue-200 hover:bg-blue-50 transition">Alertas</button>
+          <button onclick="viewAlerts(${m.id}, '${(m.label || m.url).replace(/'/g, '')}')" class="relative text-sm text-blue-600 hover:text-blue-800 px-3 py-1 rounded-lg border border-blue-200 hover:bg-blue-50 transition">
+            Alerts${m.unseen_alerts > 0 ? ` <span class="bg-red-500 text-white text-xs rounded-full px-1">${m.unseen_alerts}</span>` : ''}
+          </button>
           <button onclick="deleteMonitor(${m.id})" class="text-sm text-red-400 hover:text-red-600 px-3 py-1 rounded-lg border border-red-100 hover:bg-red-50 transition">✕</button>
         </div>
       </div>
@@ -146,13 +176,6 @@
     loadDashboard();
   }
 
-  async function viewAlerts(id, label) {
-    const alerts = await api(`/monitors/${id}/alerts`);
-    if (!alerts || alerts.length === 0) { alert(`Sin alertas para: ${label}`); return; }
-    const msg = alerts.map(a => `📅 ${new Date(a.detected_at).toLocaleString('es-ES')}\n→ ${a.new_snippet?.substring(0,100)}...`).join('\n\n');
-    alert(`Últimas alertas de "${label}":\n\n${msg}`);
-  }
-
   async function upgradePro() {
     const result = await api('/billing/checkout', 'POST');
     if (result?.checkout_url) window.location.href = result.checkout_url;
@@ -172,7 +195,65 @@
     if (e.target === e.currentTarget) closeModal();
   });
 
+  async function loadNotifications() {
+    const notifs = await api('/monitors/notifications');
+    if (!notifs) return;
+    const badge = document.getElementById('notif-badge');
+    const list = document.getElementById('notif-list');
+    if (notifs.length === 0) {
+      badge.classList.add('hidden');
+      list.innerHTML = '<div class="text-center text-gray-400 text-sm py-6">No new notifications</div>';
+    } else {
+      badge.textContent = notifs.length;
+      badge.classList.remove('hidden');
+      list.innerHTML = notifs.map(n => `
+        <div class="px-4 py-3 hover:bg-gray-50 transition">
+          <div class="font-medium text-gray-800 text-sm truncate">${n.monitor_label}</div>
+          <div class="text-xs text-gray-500 mt-0.5">${new Date(n.detected_at).toLocaleString()}</div>
+          ${n.new_snippet ? `<div class="text-xs text-gray-600 mt-1 truncate">${n.new_snippet.substring(0, 80)}...</div>` : ''}
+        </div>
+      `).join('');
+    }
+  }
+
+  function toggleNotifications() {
+    const dropdown = document.getElementById('notif-dropdown');
+    const overlay = document.getElementById('notif-overlay');
+    const isHidden = dropdown.classList.contains('hidden');
+    if (isHidden) {
+      dropdown.classList.remove('hidden');
+      overlay.classList.remove('hidden');
+      loadNotifications();
+    } else {
+      closeNotifications();
+    }
+  }
+
+  function closeNotifications() {
+    document.getElementById('notif-dropdown').classList.add('hidden');
+    document.getElementById('notif-overlay').classList.add('hidden');
+  }
+
+  async function markAllRead() {
+    await api('/monitors/notifications/read', 'POST');
+    closeNotifications();
+    loadDashboard();
+    loadNotifications();
+  }
+
+  async function viewAlerts(id, label) {
+    const alerts = await api(`/monitors/${id}/alerts`);
+    if (!alerts || alerts.length === 0) { alert(`No alerts for: ${label}`); return; }
+    const msg = alerts.map(a => `📅 ${new Date(a.detected_at).toLocaleString()}\n→ ${a.new_snippet?.substring(0, 100) || '(no content)'}...`).join('\n\n');
+    alert(`Latest alerts for "${label}":\n\n${msg}`);
+    // Mark this monitor's alerts as seen by reloading
+    loadDashboard();
+    loadNotifications();
+  }
+
   loadDashboard();
+  loadNotifications();
+  setInterval(loadNotifications, 30000);
 </script>
 </body>
 </html>
