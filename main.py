@@ -16,6 +16,7 @@ from chatbot.bot import router as chat_router
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
 TEMPLATES = Path(__file__).parent / "frontend" / "templates"
+STATIC = Path(__file__).parent / "frontend" / "static"
 
 
 @asynccontextmanager
@@ -33,6 +34,20 @@ app.include_router(auth_router)
 app.include_router(monitors_router)
 app.include_router(stripe_router)
 app.include_router(chat_router)
+
+app.mount("/static", StaticFiles(directory=STATIC), name="static")
+
+
+@app.get("/sitemap.xml")
+async def sitemap():
+    from fastapi.responses import FileResponse
+    return FileResponse(STATIC / "sitemap.xml", media_type="application/xml")
+
+
+@app.get("/robots.txt")
+async def robots():
+    from fastapi.responses import FileResponse
+    return FileResponse(STATIC / "robots.txt", media_type="text/plain")
 
 
 def html(name: str) -> HTMLResponse:

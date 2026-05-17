@@ -1,9 +1,41 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SiteMonitor – Alertas cuando tu web favorita cambia</title>
+  <title>GetURLMonitor – Get Email Alerts When Any Website Changes</title>
+  <meta name="description" content="Monitor any URL and get instant email alerts when content changes. Track prices, job listings, competitor sites, and stock availability. Free plan included.">
+  <meta name="keywords" content="website monitor, URL monitoring, change detection, price tracking, email alerts, website watcher">
+  <link rel="canonical" href="https://www.geturlmonitor.com/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.geturlmonitor.com/">
+  <meta property="og:title" content="GetURLMonitor – Get Email Alerts When Any Website Changes">
+  <meta property="og:description" content="Monitor any URL and get instant email alerts when content changes. Track prices, job listings, competitor sites, and stock availability.">
+  <meta property="og:site_name" content="GetURLMonitor">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="GetURLMonitor – Website Change Alerts">
+  <meta name="twitter:description" content="Monitor any URL and get email alerts when content changes. Free plan included.">
+
+  <!-- Schema.org -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "GetURLMonitor",
+    "url": "https://www.geturlmonitor.com",
+    "description": "Monitor any URL and get email alerts when content changes.",
+    "applicationCategory": "BusinessApplication",
+    "offers": [
+      {"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Free"},
+      {"@type": "Offer", "price": "5", "priceCurrency": "USD", "name": "Pro"}
+    ]
+  }
+  </script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .gradient-bg { background: linear-gradient(135deg, #1e3a5f 0%, #0f2340 100%); }
@@ -17,95 +49,95 @@
 
 <!-- Nav -->
 <nav class="gradient-bg text-white px-6 py-4 flex justify-between items-center">
-  <span class="text-xl font-bold">🔔 SiteMonitor</span>
+  <span class="text-xl font-bold">GetURLMonitor</span>
   <div class="space-x-4">
     <a href="/dashboard" class="text-blue-200 hover:text-white text-sm">Dashboard</a>
-    <a href="/login" class="bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded-lg text-sm font-medium transition">Entrar</a>
-    <a href="/register" class="bg-white text-blue-900 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition">Registro gratis</a>
+    <a href="/login" class="bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded-lg text-sm font-medium transition">Log in</a>
+    <a href="/register" class="bg-white text-blue-900 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition">Sign up free</a>
   </div>
 </nav>
 
 <!-- Hero -->
 <section class="gradient-bg text-white py-24 px-6 text-center">
   <h1 class="text-5xl font-bold mb-6 leading-tight">
-    Sé el primero en saber<br>cuando algo cambia
+    Be the first to know<br>when any website changes
   </h1>
   <p class="text-xl text-blue-200 mb-10 max-w-2xl mx-auto">
-    SiteMonitor vigila las páginas web que te importan y te avisa por email al instante.
-    Precios, ofertas de trabajo, stock, competidores — tú decides qué monitorizar.
+    GetURLMonitor watches the web pages that matter to you and sends instant email alerts when anything changes.
+    Prices, job listings, stock, competitors — you choose what to monitor.
   </p>
   <a href="/register" class="bg-blue-400 hover:bg-blue-300 text-white font-bold px-10 py-4 rounded-xl text-lg transition">
-    Empezar gratis — 3 URLs incluidas
+    Start free — 3 URLs included
   </a>
-  <p class="text-blue-300 text-sm mt-4">Sin tarjeta de crédito. Gratis para siempre.</p>
+  <p class="text-blue-300 text-sm mt-4">No credit card required. Free forever.</p>
 </section>
 
-<!-- Casos de uso -->
+<!-- Use cases -->
 <section class="py-20 px-6 max-w-5xl mx-auto">
-  <h2 class="text-3xl font-bold text-center mb-14 text-gray-800">¿Para qué lo usa la gente?</h2>
+  <h2 class="text-3xl font-bold text-center mb-14 text-gray-800">What people use it for</h2>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
     <div class="bg-white rounded-2xl p-8 shadow card-hover">
       <div class="text-4xl mb-4">💰</div>
-      <h3 class="font-bold text-lg mb-2">Seguimiento de precios</h3>
-      <p class="text-gray-600 text-sm">Añade la página de cualquier producto y recibe un aviso cuando baje el precio. Sin suscripciones a tiendas específicas.</p>
+      <h3 class="font-bold text-lg mb-2">Price tracking</h3>
+      <p class="text-gray-600 text-sm">Add any product page and get notified when the price drops. No need to rely on retailer-specific alerts.</p>
     </div>
     <div class="bg-white rounded-2xl p-8 shadow card-hover">
       <div class="text-4xl mb-4">💼</div>
-      <h3 class="font-bold text-lg mb-2">Alertas de empleo</h3>
-      <p class="text-gray-600 text-sm">Monitoriza la página de carreras de empresas que te interesan. Sé el primero en aplicar cuando publiquen una oferta.</p>
+      <h3 class="font-bold text-lg mb-2">Job alerts</h3>
+      <p class="text-gray-600 text-sm">Monitor the careers page of companies you want to work for. Be the first to apply when they post a new role.</p>
     </div>
     <div class="bg-white rounded-2xl p-8 shadow card-hover">
       <div class="text-4xl mb-4">📦</div>
-      <h3 class="font-bold text-lg mb-2">Disponibilidad de stock</h3>
-      <p class="text-gray-600 text-sm">Consolas, zapatillas limitadas, cualquier producto agotado. Recibe la alerta en cuanto vuelva a estar disponible.</p>
+      <h3 class="font-bold text-lg mb-2">Stock availability</h3>
+      <p class="text-gray-600 text-sm">Consoles, limited sneakers, any sold-out product. Get the alert the moment it's back in stock.</p>
     </div>
     <div class="bg-white rounded-2xl p-8 shadow card-hover">
       <div class="text-4xl mb-4">🕵️</div>
-      <h3 class="font-bold text-lg mb-2">Análisis de competidores</h3>
-      <p class="text-gray-600 text-sm">Vigila cambios en las webs de tu competencia: nuevos productos, cambios de precio, actualizaciones de servicio.</p>
+      <h3 class="font-bold text-lg mb-2">Competitor monitoring</h3>
+      <p class="text-gray-600 text-sm">Track changes on your competitors' websites: new products, price updates, service changes.</p>
     </div>
     <div class="bg-white rounded-2xl p-8 shadow card-hover">
       <div class="text-4xl mb-4">📰</div>
-      <h3 class="font-bold text-lg mb-2">Noticias y publicaciones</h3>
-      <p class="text-gray-600 text-sm">Sigue blogs o webs de noticias que no tienen RSS. Recibe el aviso cuando publiquen algo nuevo.</p>
+      <h3 class="font-bold text-lg mb-2">News & publications</h3>
+      <p class="text-gray-600 text-sm">Follow blogs or news sites without RSS. Get notified when they publish something new.</p>
     </div>
     <div class="bg-white rounded-2xl p-8 shadow card-hover">
       <div class="text-4xl mb-4">🔐</div>
-      <h3 class="font-bold text-lg mb-2">Cambios legales y normativas</h3>
-      <p class="text-gray-600 text-sm">Monitoriza páginas de organismos oficiales, términos de servicio o políticas de privacidad que afecten a tu negocio.</p>
+      <h3 class="font-bold text-lg mb-2">Legal & policy changes</h3>
+      <p class="text-gray-600 text-sm">Monitor government pages, terms of service, or privacy policies that affect your business.</p>
     </div>
   </div>
 </section>
 
-<!-- Precios -->
+<!-- Pricing -->
 <section class="bg-white py-20 px-6">
   <div class="max-w-3xl mx-auto text-center">
-    <h2 class="text-3xl font-bold mb-14">Precios simples y honestos</h2>
+    <h2 class="text-3xl font-bold mb-14">Simple, honest pricing</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div class="border-2 border-gray-200 rounded-2xl p-8">
-        <h3 class="text-xl font-bold mb-2">Gratis</h3>
-        <div class="text-4xl font-bold text-gray-800 mb-6">$0<span class="text-lg text-gray-500">/mes</span></div>
+        <h3 class="text-xl font-bold mb-2">Free</h3>
+        <div class="text-4xl font-bold text-gray-800 mb-6">$0<span class="text-lg text-gray-500">/mo</span></div>
         <ul class="text-left space-y-3 text-gray-600 text-sm mb-8">
-          <li>✅ Hasta 3 URLs monitorizadas</li>
-          <li>✅ Checks cada 24 horas</li>
-          <li>✅ Alertas por email</li>
-          <li>✅ Historial de cambios (7 días)</li>
+          <li>✅ Up to 3 monitored URLs</li>
+          <li>✅ Checks every 24 hours</li>
+          <li>✅ Email alerts</li>
+          <li>✅ 7-day change history</li>
         </ul>
-        <a href="/register" class="block bg-gray-800 text-white py-3 rounded-xl font-medium hover:bg-gray-700 transition">Empezar gratis</a>
+        <a href="/register" class="block bg-gray-800 text-white py-3 rounded-xl font-medium hover:bg-gray-700 transition">Get started free</a>
       </div>
       <div class="border-2 border-blue-500 rounded-2xl p-8 relative">
-        <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-4 py-1 rounded-full">Más popular</span>
+        <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-4 py-1 rounded-full">Most popular</span>
         <h3 class="text-xl font-bold mb-2">Pro</h3>
-        <div class="text-4xl font-bold text-blue-600 mb-6">$5<span class="text-lg text-gray-500">/mes</span></div>
+        <div class="text-4xl font-bold text-blue-600 mb-6">$5<span class="text-lg text-gray-500">/mo</span></div>
         <ul class="text-left space-y-3 text-gray-600 text-sm mb-8">
-          <li>✅ URLs ilimitadas</li>
-          <li>✅ Checks cada hora</li>
-          <li>✅ Alertas al instante</li>
-          <li>✅ Selector CSS para partes específicas</li>
-          <li>✅ Historial completo</li>
-          <li>✅ Soporte prioritario</li>
+          <li>✅ Unlimited URLs</li>
+          <li>✅ Checks every hour</li>
+          <li>✅ Instant alerts</li>
+          <li>✅ CSS selector for specific sections</li>
+          <li>✅ Full change history</li>
+          <li>✅ Priority support</li>
         </ul>
-        <a href="/register?plan=pro" class="block bg-blue-500 text-white py-3 rounded-xl font-medium hover:bg-blue-400 transition">Empezar con Pro</a>
+        <a href="/register?plan=pro" class="block bg-blue-500 text-white py-3 rounded-xl font-medium hover:bg-blue-400 transition">Start with Pro</a>
       </div>
     </div>
   </div>
@@ -113,23 +145,23 @@
 
 <!-- Footer -->
 <footer class="gradient-bg text-blue-200 py-10 text-center text-sm">
-  <p>© 2024 SiteMonitor · <a href="/privacy" class="hover:text-white">Privacidad</a> · <a href="/terms" class="hover:text-white">Términos</a></p>
+  <p>© 2026 GetURLMonitor · <a href="/privacy" class="hover:text-white">Privacy</a> · <a href="/terms" class="hover:text-white">Terms</a></p>
 </footer>
 
 <!-- Chat Widget -->
 <div id="chat-widget">
   <div id="chat-box" class="bg-white rounded-2xl shadow-2xl border border-gray-200 mb-4 flex flex-col overflow-hidden">
     <div class="gradient-bg text-white px-4 py-3 flex justify-between items-center">
-      <span class="font-medium text-sm">💬 Asistente SiteMonitor</span>
+      <span class="font-medium text-sm">💬 GetURLMonitor Assistant</span>
       <button onclick="toggleChat()" class="text-blue-200 hover:text-white text-lg">✕</button>
     </div>
     <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm" style="min-height:280px;max-height:320px;">
       <div class="bg-blue-50 text-gray-700 rounded-xl px-3 py-2 max-w-xs">
-        ¡Hola! Soy el asistente de SiteMonitor. ¿En qué puedo ayudarte? 😊
+        Hi! I'm the GetURLMonitor assistant. How can I help you?
       </div>
     </div>
     <div class="border-t p-3 flex gap-2">
-      <input id="chat-input" type="text" placeholder="Escribe tu pregunta..." class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+      <input id="chat-input" type="text" placeholder="Ask a question..." class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
         onkeydown="if(event.key==='Enter') sendChat()">
       <button onclick="sendChat()" class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-400 transition">→</button>
     </div>
@@ -167,7 +199,7 @@
       chatSessionId = data.session_id;
       addMessage('assistant', data.reply);
     } catch (e) {
-      addMessage('assistant', 'Error al conectar. Inténtalo de nuevo.');
+      addMessage('assistant', 'Connection error. Please try again.');
     }
   }
 
