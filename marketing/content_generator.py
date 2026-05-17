@@ -11,13 +11,13 @@ def _get_client():
 
 MODEL = "llama-3.3-70b-versatile"
 
-PRODUCT_CONTEXT = f"""
-SiteMonitor es una herramienta SaaS que monitoriza URLs y envía alertas por email cuando
+PRODUCT_CONTEXT = """
+GetURLMonitor es una herramienta SaaS que monitoriza URLs y envía alertas por email cuando
 detecta cambios en el contenido. Casos de uso: seguimiento de precios, alertas de empleo,
 cambios en webs de competidores, disponibilidad de stock.
 - Plan gratuito: 3 URLs, checks cada 24h
 - Plan Pro: $5/mes, URLs ilimitadas, checks cada hora
-- Web: {config.BASE_URL}
+- Web: https://www.geturlmonitor.com
 """
 
 REDDIT_SUBREDDITS = [
